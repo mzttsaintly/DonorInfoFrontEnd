@@ -40,12 +40,16 @@
                     value-format="YYYY-MM-DD" />
 
             </el-col>
+
             <el-col class="place">
                 <div class="Title">采样地点：</div>
                 <el-input class="inputBox" v-model="place" placeholder="Please input place" clearable />
             </el-col>
-            <el-col class="Title">联系电话：</el-col>
-            <el-input class="inputBox" v-model="phone" placeholder="Please input phone" clearable />
+
+            <el-col class="phone">
+                <div class="Title">联系电话：</div>
+                <el-input class="inputBox" v-model="phone" placeholder="Please input phone" clearable />
+            </el-col>
         </el-col>
 
         <el-col class="showInfoBox" :span="0" :md="10">
@@ -63,12 +67,12 @@
             </el-row>
         </el-col>
         <el-row class="upload">
-        <el-button class="uploadButton" type="primary" size="large" @click="post_button">
-            提交<el-icon class="el-icon--right">
-                <Upload />
-            </el-icon>
-        </el-button>
-    </el-row>
+            <el-button class="uploadButton" type="primary" size="large" @click="post_button">
+                提交<el-icon class="el-icon--right">
+                    <Upload />
+                </el-icon>
+            </el-button>
+        </el-row>
     </el-row>
 
     <!-- <el-row class="upload">
@@ -83,6 +87,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
+import dayjs from 'dayjs';
 const name = ref('')  // 供者名字
 const age = ref(1)  // 供者年龄
 const handleChange = (value) => {
@@ -137,9 +142,8 @@ function post_button() {
 }
 
 onMounted(() => {
-    let today = new Date()
-    // date.value = today.getFullYear() +"-" + (today.getMonth() + 1) + "-" + today.getDate()
-    // 之后使用day.js进行格式化
+    let today = dayjs().format('YYYY-MM-DD')
+    date.value = today
 })
 </script>
 
@@ -147,33 +151,38 @@ onMounted(() => {
 .Title {
     font-family: Georgia, -apple-system, 'Nimbus Roman No9 L', 'PingFang SC', 'Hiragino Sans GB', 'Noto Serif SC', 'Microsoft Yahei', 'WenQuanYi Micro Hei', 'ST Heiti', sans-serif;
     padding: 1vh;
-    height: 3vh;
+    height: 2vh;
 }
 
 .showInfo {
-    border: solid 1px #5de2ce;
-    height: 100%;
     padding: 1vw;
+    align-content: space-around;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: flex-start;
 }
 
 .input_box {
-    height: 90vh;
+    /* height: 65vh; */
     /* align-items: center; */
+    width: 100%;
 }
 
 .addInfoBox {
-    padding: 1vw;
-    /* height: 100%; */
     border: solid 1px #5de2ce;
+    padding: 1vw;
+    /* height: 70vh; */
 }
 
 .showInfoBox {
     padding: 1vw;
+    /* height: 70vh; */
+    border: #5de2ce 1px solid;
 }
 
 .upload {
     justify-content: center;
-    height: -4vh;
+    align-items: center;
 }
 
 .uploadButton {
