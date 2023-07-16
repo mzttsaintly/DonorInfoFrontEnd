@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import Header from './components/Header.vue'
 import Footer from './components/Footer.vue'
+import Sidebar from './components/Sidebar.vue'
 
 const router = useRouter()
 
@@ -17,7 +18,7 @@ onMounted(() => {
     </el-row>
     <el-row class="main">
         <el-col class="sideBar" :span="0" :md="2">
-            <!-- sidebar预留 -->
+            <Sidebar></Sidebar>
         </el-col>
         <el-col class="main" :span="24" :md="22">
             <!-- <el-scrollbar height="80vh" ref="scrollToZero"> -->
