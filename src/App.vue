@@ -26,9 +26,9 @@ onMounted(() => {
             <!-- </el-scrollbar> -->
         </el-col>
     </el-row>
-    <el-row class="foot">
+    <!-- <el-row class="foot">
         <Footer></Footer>
-    </el-row>
+    </el-row> -->
 </template>
 
 <style>
@@ -36,10 +36,17 @@ onMounted(() => {
     height: 10vh;
     justify-content: center;
     align-items: center;
+    background-color: #afceeb;
 }
 
 .main {
-    height: 80vh;
+    height: 90vh;
+    border: #2d7cc7 solid 1px;
+}
+
+.sideBar {
+    background-color: #7e92a5;
+    height: 90vh;
 }
 
 .foot {
@@ -47,4 +54,6 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
 }
+
+
 </style>
