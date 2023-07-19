@@ -249,7 +249,10 @@ async function submitForm(verifyform) {
             console.log("new add is:", new_add)
             // 提交post
             axios.post(add_url.value, new_add).then(function (response) {
-                alert(response.data);
+                // alert(response.data);
+                ElMessageBox.alert(response.data, '写入成功', {
+                confirmButtonText: 'OK',
+            })
                 console.log(response);
             }).catch(function (err) {
                 ElMessageBox.alert(err, '服务器错误', {
