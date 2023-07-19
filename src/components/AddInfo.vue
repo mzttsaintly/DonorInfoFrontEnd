@@ -21,7 +21,7 @@
                     <!-- <div class="Title">身份证号：</div> -->
                     <el-input class="inputBox" v-model="form.id_num" placeholder="请输入供者身份证号" clearable />
                 </el-form-item>
-                <el-form-item label="样品类型" class="sample_type Title" prop="sample_type">
+                <el-form-item label="样品类型：" class="sample_type Title" prop="sample_type">
                     <!-- <div class="Title">样品类型</div> -->
                     <el-radio-group v-model="form.sample_type">
                         <el-radio-button class="inputBox" :label="0">骨髓</el-radio-button>
@@ -229,10 +229,10 @@ function handleClose(done) {
 const add_url = ref('http://localhost:5000/add')
 
 // 提交表单
-async function submitForm(form) {
+async function submitForm(verifyform) {
     dialogVisible.value = false
-    if (!form) return;
-    await form.validate((valid, fields) => {
+    if (!verifyform) return;
+    await verifyform.validate((valid, fields) => {
         if (valid) {
             // 组装post数据
             const new_add = reactive({
@@ -246,7 +246,7 @@ async function submitForm(form) {
                 "place": form.place,
                 "phone": form.phone
             })
-            console.log(new_add)
+            console.log("new add is:", new_add)
             // 提交post
             axios.post(add_url.value, new_add).then(function (response) {
                 alert(response.data);
@@ -329,6 +329,6 @@ onMounted(() => {
 }
 
 .inputBox {
-    height: 3vh;
+    /* height: 3vh; */
 }
 </style>
