@@ -2,7 +2,6 @@
 import { onMounted } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import Header from './components/Header.vue'
-import Footer from './components/Footer.vue'
 import Sidebar from './components/Sidebar.vue'
 
 const router = useRouter()

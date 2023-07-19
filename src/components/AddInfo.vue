@@ -44,22 +44,23 @@
 
                 </el-form-item>
 
-                <el-form-item label="采样地点：" class="place Title"  prop="place">
+                <el-form-item label="采样地点：" class="place Title" prop="place">
                     <!-- <div class="Title">采样地点：</div> -->
                     <el-input class="inputBox" v-model="form.place" placeholder="请输入采样地点" clearable />
                 </el-form-item>
 
-                <el-form-item label="联系电话：" class="phone Title"  prop="phone">
+                <el-form-item label="联系电话：" class="phone Title" prop="phone">
                     <!-- <div class="Title">联系电话：</div> -->
                     <el-input type="number" class="inputBox" v-model="form.phone" placeholder="请输入联系电话" clearable />
                 </el-form-item>
 
                 <el-form-item class="upload">
-                    <el-button class="uploadButton" type="primary" size="large" @click="post_button">
+                    <el-button class="uploadButton" type="primary" size="large" @click="verifyForm(formRef)">
                         提交<el-icon class="el-icon--right">
                             <Upload />
                         </el-icon>
                     </el-button>
+                    <el-button @click="resetForm(formRef)">重置</el-button>
                 </el-form-item>
             </el-form>
         </el-col>
@@ -76,28 +77,51 @@
                 <el-col class="sample_quantity showTitle">样品量：{{ form.sample_quantity }}g</el-col>
                 <el-col class="date showTitle">采样日期：{{ form.date }}</el-col>
                 <el-col class="place showTitle">采样地点：{{ form.place }}</el-col>
-                <el-col class="phone showTitle">联系电话：{{ form.phone }}</el-col>
+                <el-col class="phone showTitle">手机号码：{{ form.phone }}</el-col>
             </el-row>
         </el-col>
     </el-row>
 
-    <!-- <el-row class="upload">
-        <el-button class="uploadButton" type="primary" size="large" @click="post_button">
-            提交<el-icon class="el-icon--right">
-                <Upload />
-            </el-icon>
-        </el-button>
-    </el-row> -->
+    <!-- 弹出确认框 -->
+    <el-dialog v-model="dialogVisible" title="请确认信息是否无误" width="30%" :before-close="handleClose">
+        <!-- 显示主体 -->
+        <el-col class="showInfoBox">
+            <el-row class="showInfo">
+                <el-col class="name showTitle">
+                    <p>供者姓名：{{ form.name }}</p>
+                </el-col>
+                <el-col class="age showTitle">供者年龄：{{ form.age }}</el-col>
+                <el-col class="gender showTitle">供者性别：{{ form.gender ? "男" : "女" }}</el-col>
+                <el-col class="gender showTitle">身份证号：{{ form.id_num }}</el-col>
+                <el-col class="sample_type showTitle">样品类型：{{ showSampleType(form.sample_type) }}</el-col>
+                <el-col class="sample_quantity showTitle">样品量：{{ form.sample_quantity }}g</el-col>
+                <el-col class="date showTitle">采样日期：{{ form.date }}</el-col>
+                <el-col class="place showTitle">采样地点：{{ form.place }}</el-col>
+                <el-col class="phone showTitle">手机号码：{{ form.phone }}</el-col>
+            </el-row>
+        </el-col>
+        <!-- 底部按钮 -->
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="submitForm(formRef)">
+                    确定提交
+                </el-button>
+            </span>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 import dayjs from 'dayjs';
-// import { FormInstance, FormRules } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 
+// 表单代理
 const formRef = ref()
 
+// 表单数据
 const form = reactive({
     name: '',
     age: 1,
@@ -110,6 +134,7 @@ const form = reactive({
     phone: ''
 })
 
+// 表单校验规则
 const rules = reactive({
     name: [
         { required: true, message: '姓名不能为空', trigger: 'blur' },
@@ -118,7 +143,8 @@ const rules = reactive({
         { required: true, message: '年龄不能为空', trigger: 'blur' }
     ],
     id_num: [
-        { required: true, message: '身份证号不能为空', trigger: 'blur' }
+        { required: true, message: '身份证号不能为空', trigger: 'blur' },
+        { pattern: /^[0-9Xx/]{18}$/, message: "请填写正确的身份证号码", trigger: 'blur' }
     ],
     sample_type: [
         { required: true, message: '样品类型不能为空', trigger: 'blur' }
@@ -130,7 +156,8 @@ const rules = reactive({
         { required: true, message: '采样地点不能为空', trigger: 'blur' }
     ],
     phone: [
-        { required: true, message: '联系电话不能为空', trigger: 'blur' }
+        { required: true, message: '手机号码不能为空', trigger: 'blur' },
+        { pattern: /^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/, message: "请填写正确的电话号码", trigger: 'blur' }
     ],
 })
 
@@ -150,6 +177,7 @@ const shortcuts = [
     },
 ]
 
+// 转换样品类型数字为文字
 function showSampleType(sample_type) {
     const sampleDict = {
         0: "骨髓",
@@ -161,30 +189,85 @@ function showSampleType(sample_type) {
     return sampleDict[sample_type]
 }
 
-const add_url = ref('http://localhost:5000/add')
+// 重置表单
+function resetForm(form) {
+    if (!form) return;
+    form.resetFields()
+}
 
-function post_button() {
-    const new_add = reactive({
-        "name": form.name,
-        "age": form.age,
-        "gender": (form.gender ? "男" : "女"),
-        "id_num": form.id_num,
-        "sample_type": showSampleType(form.sample_type),
-        "sample_quantity": form.sample_quantity + 'g',
-        "date": form.date,
-        "place": form.place,
-        "phone": form.phone
-    })
-    console.log(new_add)
-    axios.post(add_url.value, new_add).then(function (response) {
-        alert(response.data);
-        console.log(response);
-    }).catch(function (err) {
-        alert(err)
-        console.log(err)
+// 弹出对话框是否显示
+const dialogVisible = ref(false)
+
+// 前端校验表单数据
+async function verifyForm(form) {
+    if (!form) return;
+    await form.validate((valid, fields) => {
+        if (valid) {
+            dialogVisible.value = true
+        } else {
+            // 反馈表单校验错误
+            ElMessageBox.alert('输入项有误', '错误输入', {
+                confirmButtonText: 'OK',
+            })
+            console.log('输入项有误', fields)
+        }
     })
 }
 
+// 提示是否关闭对话框
+function handleClose(done) {
+    ElMessageBox.confirm('你确定要中断提交吗?')
+        .then(() => {
+            done()
+        })
+        .catch(() => {
+            // catch error
+        })
+}
+
+// 提交数据链接
+const add_url = ref('http://localhost:5000/add')
+
+// 提交表单
+async function submitForm(form) {
+    dialogVisible.value = false
+    if (!form) return;
+    await form.validate((valid, fields) => {
+        if (valid) {
+            // 组装post数据
+            const new_add = reactive({
+                "name": form.name,
+                "age": form.age,
+                "gender": (form.gender ? "男" : "女"),
+                "id_num": form.id_num,
+                "sample_type": showSampleType(form.sample_type),
+                "sample_quantity": form.sample_quantity + 'g',
+                "date": form.date,
+                "place": form.place,
+                "phone": form.phone
+            })
+            console.log(new_add)
+            // 提交post
+            axios.post(add_url.value, new_add).then(function (response) {
+                alert(response.data);
+                console.log(response);
+            }).catch(function (err) {
+                ElMessageBox.alert(err, '服务器错误', {
+                    confirmButtonText: 'OK',
+                })
+                console.log(err)
+            })
+        } else {
+            // 反馈表单校验错误
+            ElMessageBox.alert('输入项有误', '错误输入', {
+                confirmButtonText: 'OK',
+            })
+            console.log('输入项有误', fields)
+        }
+    })
+}
+
+// 网页启动时自动输入当天时间
 onMounted(() => {
     form.date = dayjs().format('YYYY-MM-DD')
 })
