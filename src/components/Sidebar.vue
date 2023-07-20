@@ -16,5 +16,12 @@ import { RouterLink } from 'vue-router';
 </template>
 
 <style scoped>
+a {
+    text-decoration: none;
+}
 
+.sideBar_nav {
+    border-right: 0;
+    margin: 1vh auto;
+}
 </style>
