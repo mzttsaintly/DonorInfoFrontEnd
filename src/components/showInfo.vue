@@ -1,11 +1,13 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive } from 'vue';
 import axios from 'axios';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const gotInfo = ref()
 
-const get_url = 'http://localhost:5000/quest_all'
+const infoSearch = ref()  // 精确查询的表单代理对象
+
+const get_url = 'http://localhost:5000/quest_all'  // 获取全部数据的接口
 
 // 获取全部数据
 function getAllInfo() {
@@ -20,28 +22,73 @@ function getAllInfo() {
     })
 }
 
-const search_url = 'http://localhost:5000/query_by_param'
+const search_url = 'http://localhost:5000/query_by_param'  // 精确查找接口
+const fuzzyQuery_url = 'http://localhost:5000/fuzzy_query'  // 模糊查找接口
+
 const formInfo = reactive({
     searchSelect: '', // 查询选择器
     searchContent: ''  // 查询内容
 })
 
+// 模糊查找
+async function fuzzyQueryInfo(verifyform, attr_name, con) {
+    if (!verifyform) return;
+    await verifyform.validate((valid, fields) => {
+        if (valid) {  // 验证是否有内容，有则执行
+            const new_search = reactive({
+                'attr_name': attr_name,
+                'con': con
+            })
+            axios.post(fuzzyQuery_url, new_search).then(response => {
+                gotInfo.value = response.data
+                console.log(response)
+            }).catch(function (err) {
+                ElMessageBox.alert(err, '服务器错误', {
+                    confirmButtonText: 'OK',
+                })
+                console.log(err)
+            })
+        } else {
+            ElMessageBox.alert('不可以为空', '错误输入', {
+                confirmButtonText: 'OK',
+            })
+            console.log('输入项有误', fields)
+        }
+    })
+}
 
-// 根据条件查找数据
-function getInfoBySerial(keword, con) {
-    const new_search = reactive({
-        'keyword': keword,
-        'con': con
+
+// 精确查找，根据条件查找数据，必须全等，先校验是否有内容
+async function getInfoBySerial(verifyform, keword, con) {
+    if (!verifyform) return;
+    await verifyform.validate((valid, fields) => {
+        if (valid) {  // 验证是否有内容，有则执行
+            const new_search = reactive({
+                'keyword': keword,
+                'con': con
+            })
+            axios.post(search_url, new_search).then(response => {
+                gotInfo.value = response.data
+                console.log(response)
+            }).catch(function (err) {
+                ElMessageBox.alert(err, '服务器错误', {
+                    confirmButtonText: 'OK',
+                })
+                console.log(err)
+            })
+        } else {
+            ElMessageBox.alert('不可以为空', '错误输入', {
+                confirmButtonText: 'OK',
+            })
+            console.log('输入项有误', fields)
+        }
     })
-    axios.post(search_url, new_search).then(response => {
-        gotInfo.value = response.data
-        console.log(response)
-    }).catch(function (err) {
-        ElMessageBox.alert(err, '服务器错误', {
-            confirmButtonText: 'OK',
-        })
-        console.log(err)
-    })
+}
+
+// 重置表单
+function resetForm(form) {
+    if (!form) return;
+    form.resetFields()
 }
 
 // 条件查询的下拉内容
@@ -67,27 +114,39 @@ const selectOptions = [
         label: '联系电话'
     },
 ]
+
+// 校验输入
+const showRules = reactive({
+    searchSelect: [
+        { required: true, message: '不能为空', trigger: 'blur' },
+    ],
+    searchContent: [
+        { required: true, message: '不能为空', trigger: 'blur' },
+    ]
+})
 </script>
 
 <template>
     <el-row class="sreachBox">
         <el-col class="sreachInfo" :span="3">
             <el-button @click="getAllInfo()">获取全部数据</el-button>
-
-            <el-form :model="formInfo" class="serialSearch" label-position="top">
-                <el-form-item label="请选择需要查询的项目">
-                    <el-select v-model="formInfo.searchSelect" class="m-2" placeholder="Select" size="large">
+            
+            <el-form :model="formInfo" class="infoSearch" :rules="showRules" label-position="top" ref="infoSearch">
+                <el-tag>按条件查找</el-tag>
+                <el-form-item label="请选择需要查询的项目" prop="searchSelect">
+                    <el-select v-model="formInfo.searchSelect" class="m-2" placeholder="请选择查询项目" size="large">
                         <el-option v-for="item in selectOptions" :key="item.value" :label="item.label"
                             :value="item.value" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="输入查询内容">
+                <el-form-item label="输入查询内容" prop="searchContent">
                     <el-input v-model="formInfo.searchContent" clearable></el-input>
                 </el-form-item>
 
                 <el-form-item>
                     <el-button type="primary"
-                        @click="getInfoBySerial(keword = formInfo.searchSelect, con = formInfo.searchContent)">查找</el-button>
+                        @click="fuzzyQueryInfo(infoSearch, formInfo.searchSelect, formInfo.searchContent)">查找</el-button>
+                    <el-button @click="resetForm(infoSearch)">重置</el-button>
                 </el-form-item>
 
             </el-form>

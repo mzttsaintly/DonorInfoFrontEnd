@@ -116,7 +116,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 import dayjs from 'dayjs';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
 
 // 表单代理
 const formRef = ref()
