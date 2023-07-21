@@ -1,7 +1,9 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import axios from 'axios';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import FileSaver from 'file-saver';
+import * as xlsx from 'xlsx';
 
 const gotInfo = ref()
 
@@ -122,16 +124,80 @@ const showRules = reactive({
     ],
     searchContent: [
         { required: true, message: '不能为空', trigger: 'blur' },
+    ],
+    time: [
+    { required: true, message: '不能为空', trigger: 'blur' },
     ]
 })
+
+const timeRef = ref()
+const timeSelect = reactive({
+    timeValue: ''  // 查询时间段
+})
+
+const time_url = 'http://localhost:5000/query_datas'  // 查询时间接口
+
+// 按时间查询
+async function getTimes(verifyform) {
+    if (!verifyform) return;
+    await verifyform.validate((valid, fields) => {
+        if (valid) {
+            let new_time = reactive({
+                "start_time": timeSelect.timeValue[0],
+                "end_time": timeSelect.timeValue[1]
+            })
+            axios.post(time_url, new_time).then(response => {
+                gotInfo.value = response.data
+                console.log(response)
+            }).catch(function (err) {
+                ElMessageBox.alert(err, '服务器错误', {
+                    confirmButtonText: 'OK',
+                })
+                console.log(err)
+            })
+        } else {
+            ElMessageBox.alert('不可以为空', '错误输入', {
+                confirmButtonText: 'OK',
+            })
+            console.log('输入项有误', fields)
+        }
+    })
+}
+
+// 选择的项目内容
+const selects = ref('')
+
+function selection(val) {
+    selects.value = val
+}
+
+// 导出选择的内容至Excel
+function exportClick() {
+    let wb = xlsx.utils.table_to_book(document.querySelector('#my_table'));  // 关联table
+    let wbout = xlsx.write(wb, {
+        bookType: 'xlsx',
+        bookSST: true,
+        type: 'array'
+    })
+    try {
+        FileSaver.saveAs(new Blob([wbout], {
+            type: 'application/octet-stream'
+        }), '细胞供者信息.xlsx')  // 自定义文件名
+    } catch (e) {
+        if (typeof console !== 'undefined') {
+            console.log(e, wbout);
+        }
+    }
+    return wbout
+}
 </script>
 
 <template>
     <el-row class="sreachBox">
         <el-col class="sreachInfo" :span="3">
             <el-button @click="getAllInfo()">获取全部数据</el-button>
-            
-            <el-form :model="formInfo" class="infoSearch" :rules="showRules" label-position="top" ref="infoSearch">
+
+            <el-form :model="timeSelect" class="infoSearch" :rules="showRules" label-position="top" ref="infoSearch">
                 <el-tag>按条件查找</el-tag>
                 <el-form-item label="请选择需要查询的项目" prop="searchSelect">
                     <el-select v-model="formInfo.searchSelect" class="m-2" placeholder="请选择查询项目" size="large">
@@ -148,11 +214,25 @@ const showRules = reactive({
                         @click="fuzzyQueryInfo(infoSearch, formInfo.searchSelect, formInfo.searchContent)">查找</el-button>
                     <el-button @click="resetForm(infoSearch)">重置</el-button>
                 </el-form-item>
+            </el-form>
 
+            <el-tag>按时间查找</el-tag>
+            <el-form ref="timeRef" :model="timeSelect" :rules="showRules" label-position="top">
+                <el-form-item>
+                    <el-date-picker v-model="timeSelect.timeValue" type="daterange" unlink-panels range-separator="至"
+                        start-placeholder="开始时间" end-placeholder="结束时间" size="small" class="timeSelect"
+                        value-format="YYYY-MM-DD" prop="time"/>
+                    {{ timeSelect.timeValue }}
+                </el-form-item>
+                <el-button type="primary"
+                    @click="getTimes(timeRef)">查找</el-button>
+                <el-button @click="resetForm(timeRef)">重置</el-button>
             </el-form>
         </el-col>
         <el-col class="showInfo" :span="21">
-            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh">
+            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection" id="my_table">
+                <!-- 多选框 -->
+                <el-table-column type="selection" width="55" />
                 <el-table-column prop="serial" label="流水号"></el-table-column>
                 <el-table-column prop="name" label="姓名"></el-table-column>
                 <el-table-column prop="gender" label="性别"></el-table-column>
@@ -160,9 +240,12 @@ const showRules = reactive({
                 <el-table-column prop="sample_type" label="样品类型"></el-table-column>
                 <el-table-column prop="sample_quantity" label="样品量"></el-table-column>
                 <el-table-column prop="date" label="采样时间"></el-table-column>
-                <el-table-column prop="place" label="采样地点"></el-table-column>
-                <el-table-column prop="phone" label="联系电话"></el-table-column>
+                <el-table-column prop="place" label="采样地点" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="phone" label="联系电话" show-overflow-tooltip></el-table-column>
             </el-table>
+            <el-button type="primary"
+                    @click="exportClick">导出选中内容</el-button>
+            <!-- {{ selects }} -->
         </el-col>
     </el-row>
 </template>
