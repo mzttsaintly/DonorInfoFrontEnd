@@ -13,6 +13,9 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import App from './App.vue'
 import router from './router'
 
+// vue3打印组件
+import print from 'vue3-print-nb'
+
 // import './mock/mockback'
 
 const app = createApp(App)
@@ -21,6 +24,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   }
 app.use(createPinia())
 app.use(router)
+app.use(print)
 app.use(ElementPlus, {
   locale: zhCn,
 })

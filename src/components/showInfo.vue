@@ -24,7 +24,7 @@ function getAllInfo() {
     })
 }
 
-const search_url = 'http://localhost:5000/query_by_param'  // 精确查找接口
+// const search_url = 'http://localhost:5000/query_by_param'  // 精确查找接口
 const fuzzyQuery_url = 'http://localhost:5000/fuzzy_query'  // 模糊查找接口
 
 const formInfo = reactive({
@@ -61,31 +61,31 @@ async function fuzzyQueryInfo(verifyform, attr_name, con) {
 
 
 // 精确查找，根据条件查找数据，必须全等，先校验是否有内容
-async function getInfoBySerial(verifyform, keword, con) {
-    if (!verifyform) return;
-    await verifyform.validate((valid, fields) => {
-        if (valid) {  // 验证是否有内容，有则执行
-            const new_search = reactive({
-                'keyword': keword,
-                'con': con
-            })
-            axios.post(search_url, new_search).then(response => {
-                gotInfo.value = response.data
-                console.log(response)
-            }).catch(function (err) {
-                ElMessageBox.alert(err, '服务器错误', {
-                    confirmButtonText: 'OK',
-                })
-                console.log(err)
-            })
-        } else {
-            ElMessageBox.alert('不可以为空', '错误输入', {
-                confirmButtonText: 'OK',
-            })
-            console.log('输入项有误', fields)
-        }
-    })
-}
+// async function getInfoBySerial(verifyform, keword, con) {
+//     if (!verifyform) return;
+//     await verifyform.validate((valid, fields) => {
+//         if (valid) {  // 验证是否有内容，有则执行
+//             const new_search = reactive({
+//                 'keyword': keword,
+//                 'con': con
+//             })
+//             axios.post(search_url, new_search).then(response => {
+//                 gotInfo.value = response.data
+//                 console.log(response)
+//             }).catch(function (err) {
+//                 ElMessageBox.alert(err, '服务器错误', {
+//                     confirmButtonText: 'OK',
+//                 })
+//                 console.log(err)
+//             })
+//         } else {
+//             ElMessageBox.alert('不可以为空', '错误输入', {
+//                 confirmButtonText: 'OK',
+//             })
+//             console.log('输入项有误', fields)
+//         }
+//     })
+// }
 
 // 重置表单
 function resetForm(form) {
@@ -126,7 +126,7 @@ const showRules = reactive({
         { required: true, message: '不能为空', trigger: 'blur' },
     ],
     time: [
-    { required: true, message: '不能为空', trigger: 'blur' },
+        { required: true, message: '不能为空', trigger: 'blur' },
     ]
 })
 
@@ -165,7 +165,7 @@ async function getTimes(verifyform) {
 }
 
 // 选择的项目内容
-const selects = ref('')
+const selects = ref()
 
 function selection(val) {
     selects.value = val
@@ -174,6 +174,7 @@ function selection(val) {
 // 导出选择的内容至Excel
 function exportClick() {
     let wb = xlsx.utils.table_to_book(document.querySelector('#my_table'));  // 关联table
+    // let wb = xlsx.utils.json_to_sheet(selects.value)
     let wbout = xlsx.write(wb, {
         bookType: 'xlsx',
         bookSST: true,
@@ -190,6 +191,12 @@ function exportClick() {
     }
     return wbout
 }
+
+// 分页获取数据
+const totalPage = ref()  // 总页数
+const currentPage = ref()  // 当前页数
+
+
 </script>
 
 <template>
@@ -221,16 +228,15 @@ function exportClick() {
                 <el-form-item>
                     <el-date-picker v-model="timeSelect.timeValue" type="daterange" unlink-panels range-separator="至"
                         start-placeholder="开始时间" end-placeholder="结束时间" size="small" class="timeSelect"
-                        value-format="YYYY-MM-DD" prop="time"/>
+                        value-format="YYYY-MM-DD" prop="time" />
                     {{ timeSelect.timeValue }}
                 </el-form-item>
-                <el-button type="primary"
-                    @click="getTimes(timeRef)">查找</el-button>
+                <el-button type="primary" @click="getTimes(timeRef)">查找</el-button>
                 <el-button @click="resetForm(timeRef)">重置</el-button>
             </el-form>
         </el-col>
         <el-col class="showInfo" :span="21">
-            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection" id="my_table">
+            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection">
                 <!-- 多选框 -->
                 <el-table-column type="selection" width="55" />
                 <el-table-column prop="serial" label="流水号"></el-table-column>
@@ -243,15 +249,35 @@ function exportClick() {
                 <el-table-column prop="place" label="采样地点" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="phone" label="联系电话" show-overflow-tooltip></el-table-column>
             </el-table>
-            <el-button type="primary"
-                    @click="exportClick">导出选中内容</el-button>
+            <el-button type="primary" @click="exportClick">导出选中内容</el-button>
             <!-- {{ selects }} -->
+            <el-pagination layout="prev, pager, next" :total="50" :pager-count="11" v-model:current-page="currentPage"
+                v-model:page-count="totalPage" />
         </el-col>
+
     </el-row>
+
+    <div class="nonedisplay">
+        <el-table stripe :data="selects" max-height="80vh" id="my_table">
+            <el-table-column prop="serial" label="流水号"></el-table-column>
+            <el-table-column prop="name" label="姓名"></el-table-column>
+            <el-table-column prop="gender" label="性别"></el-table-column>
+            <el-table-column prop="id_num" label="身份证号"></el-table-column>
+            <el-table-column prop="sample_type" label="样品类型"></el-table-column>
+            <el-table-column prop="sample_quantity" label="样品量"></el-table-column>
+            <el-table-column prop="date" label="采样时间"></el-table-column>
+            <el-table-column prop="place" label="采样地点" show-overflow-tooltip></el-table-column>
+            <el-table-column prop="phone" label="联系电话" show-overflow-tooltip></el-table-column>
+        </el-table>
+    </div>
 </template>
 
 <style scoped>
 .showTable {
     width: 100%;
+}
+
+.nonedisplay {
+    display: none;
 }
 </style>

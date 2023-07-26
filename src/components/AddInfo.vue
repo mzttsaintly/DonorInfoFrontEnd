@@ -82,7 +82,7 @@
         </el-col>
     </el-row>
 
-    <!-- 弹出确认框 -->
+    <!-- 弹出输入信息确认框 -->
     <el-dialog v-model="dialogVisible" title="请确认信息是否无误" width="30%" :before-close="handleClose">
         <!-- 显示主体 -->
         <el-col class="showInfoBox">
@@ -107,6 +107,35 @@
                 <el-button type="primary" @click="submitForm(formRef)">
                     确定提交
                 </el-button>
+            </span>
+        </template>
+    </el-dialog>
+
+    <!-- 弹出返回信息确认 -->
+    <el-dialog id="printBox" v-model="returnInfo" title="写入成功" width="30%" :before-close="handleClose" destroy-on-close
+        center align-center>
+        <!-- 显示主体 -->
+        <el-col class="showInfoBox">
+            <el-row class="showInfo">
+                <el-col class="name showTitle">
+                    <p>供者姓名：{{ resList.name }}</p>
+                </el-col>
+                <el-col class="age showTitle">供者年龄：{{ resList.age }}</el-col>
+                <el-col class="gender showTitle">供者性别：{{ resList.gender }}</el-col>
+                <el-col class="id_num showTitle">身份证号：{{ resList.id_num }}</el-col>
+                <el-col class="sample_type showTitle">样品类型：{{ resList.sample_type }}</el-col>
+                <el-col class="sample_quantity showTitle">样品量：{{ resList.sample_quantity }}</el-col>
+                <el-col class="date showTitle">采样日期：{{ resList.date }}</el-col>
+                <el-col class="place showTitle">采样地点：{{ resList.place }}</el-col>
+                <el-col class="phone showTitle">手机号码：{{ resList.phone }}</el-col>
+                <el-col class="serial showTitle">流水号：{{ resList.serial }}</el-col>
+            </el-row>
+        </el-col>
+        <!-- 底部按钮 -->
+        <template #footer>
+            <span class="dialog-footer">
+                <el-button v-print="'#printBox'">打印</el-button>
+                <el-button @click="returnInfo = false">确认</el-button>
             </span>
         </template>
     </el-dialog>
@@ -195,8 +224,24 @@ function resetForm(form) {
     form.resetFields()
 }
 
-// 弹出对话框是否显示
+// 是否显示弹出输入信息确认框
 const dialogVisible = ref(false)
+
+// 是否显示弹出返回内容确认框
+const returnInfo = ref(false)
+
+const resList = reactive({
+    name: '',
+    age: 1,
+    gender: 0,
+    id_num: '',
+    sample_type: '',
+    sample_quantity: 0,
+    date: '',
+    place: '',
+    phone: '',
+    serial: ''
+})
 
 // 前端校验表单数据
 async function verifyForm(form) {
@@ -249,11 +294,22 @@ async function submitForm(verifyform) {
             console.log("new add is:", new_add)
             // 提交post
             axios.post(add_url.value, new_add).then(function (response) {
-                // alert(response.data);
-                ElMessageBox.alert(response.data, '写入成功', {
-                confirmButtonText: 'OK',
-            })
-                console.log(response);
+                // 写入完成，返回流水号
+                // ElMessageBox.alert(response.data, '写入成功', {
+                //     confirmButtonText: 'OK',
+                // })
+                // console.log(response);
+                resList.name = response.data['name']
+                resList.age = response.data['age']
+                resList.id_num = response.data['id_num']
+                resList.gender = response.data['gender']
+                resList.sample_type = response.data['sample_type']
+                resList.sample_quantity = response.data['sample_quantity']
+                resList.place = response.data['place']
+                resList.phone = response.data['phone']
+                resList.serial = response.data['serial']
+                returnInfo.value = true;
+
             }).catch(function (err) {
                 ElMessageBox.alert(err, '服务器错误', {
                     confirmButtonText: 'OK',
