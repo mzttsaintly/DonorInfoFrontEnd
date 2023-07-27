@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import axios from 'axios';
 import { ElMessageBox } from 'element-plus';
 import FileSaver from 'file-saver';
@@ -9,20 +9,20 @@ const gotInfo = ref()
 
 const infoSearch = ref()  // 精确查询的表单代理对象
 
-const get_url = 'http://localhost:5000/quest_all'  // 获取全部数据的接口
+// const get_url = 'http://localhost:5000/quest_all'  // 获取全部数据的接口
 
 // 获取全部数据
-function getAllInfo() {
-    axios.post(get_url).then(response => {
-        gotInfo.value = response.data
-        console.log(response)
-    }).catch(function (err) {
-        ElMessageBox.alert(err, '服务器错误', {
-            confirmButtonText: 'OK',
-        })
-        console.log(err)
-    })
-}
+// function getAllInfo() {
+//     axios.post(get_url).then(response => {
+//         gotInfo.value = response.data
+//         console.log(response)
+//     }).catch(function (err) {
+//         ElMessageBox.alert(err, '服务器错误', {
+//             confirmButtonText: 'OK',
+//         })
+//         console.log(err)
+//     })
+// }
 
 // const search_url = 'http://localhost:5000/query_by_param'  // 精确查找接口
 const fuzzyQuery_url = 'http://localhost:5000/fuzzy_query'  // 模糊查找接口
@@ -193,17 +193,50 @@ function exportClick() {
 }
 
 // 分页获取数据
-const totalPage = ref()  // 总页数
-const currentPage = ref()  // 当前页数
+const PaginateItem = ref() // 分页对象
+const totalPage = ref(1)  // 总页数
+const currentPage = ref(1)  // 当前页数
 
+const paginate_url = "http://localhost:5000/paginate_query"
 
+function getPageAll() {
+    let getPaginate = reactive({
+        "currentPage": 1
+    })
+    axios.post(paginate_url, getPaginate).then(response => {
+        PaginateItem.value = response.data
+        totalPage.value = PaginateItem.value.total
+        gotInfo.value = JSON.parse(PaginateItem.value.res)
+        console.log(PaginateItem.value.res)
+    }).catch(function (err) {
+        ElMessageBox.alert(err, '服务器错误', {
+            confirmButtonText: 'OK',
+        })
+        console.log(err)
+    })
+}
+
+watch(currentPage, async (newValue) => {
+    let getPaginate = reactive({
+        "currentPage": newValue
+    })
+    axios.post(paginate_url, getPaginate).then(response => {
+        PaginateItem.value = response.data
+        totalPage.value = PaginateItem.value.total
+        gotInfo.value = JSON.parse(PaginateItem.value.res)
+    }).catch(function (err) {
+        ElMessageBox.alert(err, '服务器错误', {
+            confirmButtonText: 'OK',
+        })
+        console.log(err)
+    })
+})
 </script>
 
 <template>
     <el-row class="sreachBox">
         <el-col class="sreachInfo" :span="3">
-            <el-button @click="getAllInfo()">获取全部数据</el-button>
-
+            <!-- <el-button @click="getAllInfo()">获取全部数据</el-button> -->
             <el-form :model="timeSelect" class="infoSearch" :rules="showRules" label-position="top" ref="infoSearch">
                 <el-tag>按条件查找</el-tag>
                 <el-form-item label="请选择需要查询的项目" prop="searchSelect">
@@ -229,11 +262,12 @@ const currentPage = ref()  // 当前页数
                     <el-date-picker v-model="timeSelect.timeValue" type="daterange" unlink-panels range-separator="至"
                         start-placeholder="开始时间" end-placeholder="结束时间" size="small" class="timeSelect"
                         value-format="YYYY-MM-DD" prop="time" />
-                    {{ timeSelect.timeValue }}
+                    <!-- {{ timeSelect.timeValue }} -->
                 </el-form-item>
                 <el-button type="primary" @click="getTimes(timeRef)">查找</el-button>
                 <el-button @click="resetForm(timeRef)">重置</el-button>
             </el-form>
+            <el-button class="getAll" @click="getPageAll()">获取全部数据</el-button>
         </el-col>
         <el-col class="showInfo" :span="21">
             <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection">
@@ -249,10 +283,13 @@ const currentPage = ref()  // 当前页数
                 <el-table-column prop="place" label="采样地点" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="phone" label="联系电话" show-overflow-tooltip></el-table-column>
             </el-table>
-            <el-button type="primary" @click="exportClick">导出选中内容</el-button>
-            <!-- {{ selects }} -->
-            <el-pagination layout="prev, pager, next" :total="50" :pager-count="11" v-model:current-page="currentPage"
+            <el-row class="infoFooter">
+                <!-- {{ selects }} -->
+            <el-pagination layout="prev, pager, next, total" :pager-count="11" v-model:current-page="currentPage"
                 v-model:page-count="totalPage" />
+                <el-button type="primary" @click="exportClick">导出选中内容</el-button>
+            </el-row>
+            
         </el-col>
 
     </el-row>
@@ -272,6 +309,12 @@ const currentPage = ref()  // 当前页数
     </div>
 </template>
 
+<style>
+.el-row {
+    align-content: space-around;
+}
+</style>
+
 <style scoped>
 .showTable {
     width: 100%;
@@ -279,5 +322,13 @@ const currentPage = ref()  // 当前页数
 
 .nonedisplay {
     display: none;
+}
+
+.infoFooter {
+    justify-content: space-around;
+}
+
+.getAll {
+    margin: 1vh auto;
 }
 </style>
