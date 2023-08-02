@@ -117,6 +117,7 @@
         <!-- 显示主体 -->
         <el-col class="showInfoBox">
             <el-row class="showInfo">
+                <el-col class="serial showTitle">样品唯一编号：{{ resList.serial }}</el-col>
                 <el-col class="name showTitle">
                     <p>供者姓名：{{ resList.name }}</p>
                 </el-col>
@@ -128,7 +129,6 @@
                 <el-col class="date showTitle">采样日期：{{ resList.date }}</el-col>
                 <el-col class="place showTitle">采样地点：{{ resList.place }}</el-col>
                 <el-col class="phone showTitle">手机号码：{{ resList.phone }}</el-col>
-                <el-col class="serial showTitle">流水号：{{ resList.serial }}</el-col>
             </el-row>
         </el-col>
         <!-- 底部按钮 -->
@@ -271,7 +271,7 @@ function handleClose(done) {
 }
 
 // 提交数据链接
-const add_url = ref('http://localhost:5000/add')
+const add_url = ref('http://192.168.1.251:8000/add')
 
 // 提交表单
 async function submitForm(verifyform) {
@@ -387,7 +387,11 @@ onMounted(() => {
     /* height: 4vh; */
 }
 
-.inputBox {
-    /* height: 3vh; */
+</style>
+
+<style scoped>
+.serial {
+    font-weight: bolder;
+    font-size: larger;
 }
 </style>

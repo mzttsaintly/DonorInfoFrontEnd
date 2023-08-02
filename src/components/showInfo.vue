@@ -25,7 +25,7 @@ const infoSearch = ref()  // 精确查询的表单代理对象
 // }
 
 // const search_url = 'http://localhost:5000/query_by_param'  // 精确查找接口
-const fuzzyQuery_url = 'http://localhost:5000/fuzzy_query'  // 模糊查找接口
+const fuzzyQuery_url = 'http://192.168.1.251:8000/fuzzy_query'  // 模糊查找接口
 
 const formInfo = reactive({
     searchSelect: '', // 查询选择器
@@ -135,7 +135,7 @@ const timeSelect = reactive({
     timeValue: ''  // 查询时间段
 })
 
-const time_url = 'http://localhost:5000/query_datas'  // 查询时间接口
+const time_url = 'http://192.168.1.251:8000/query_datas'  // 查询时间接口
 
 // 按时间查询
 async function getTimes(verifyform) {
@@ -164,16 +164,19 @@ async function getTimes(verifyform) {
     })
 }
 
-// 选择的项目内容
+// 页面选择的项目内容
 const selects = ref()
 
 function selection(val) {
     selects.value = val
+    console.log(val)
 }
 
 // 导出选择的内容至Excel
 function exportClick() {
-    let wb = xlsx.utils.table_to_book(document.querySelector('#my_table'));  // 关联table
+    let wb = xlsx.utils.table_to_book(document.querySelector('#my_table'), {
+        raw: true  // 保持原始数据内容
+    });  // 关联table
     // let wb = xlsx.utils.json_to_sheet(selects.value)
     let wbout = xlsx.write(wb, {
         bookType: 'xlsx',
@@ -181,9 +184,10 @@ function exportClick() {
         type: 'array'
     })
     try {
+        const today = new Date()
         FileSaver.saveAs(new Blob([wbout], {
             type: 'application/octet-stream'
-        }), '细胞供者信息.xlsx')  // 自定义文件名
+        }), `细胞供者信息-${today.toISOString()}.xlsx`)  // 自定义文件名
     } catch (e) {
         if (typeof console !== 'undefined') {
             console.log(e, wbout);
@@ -197,7 +201,7 @@ const PaginateItem = ref() // 分页对象
 const totalPage = ref(1)  // 总页数
 const currentPage = ref(1)  // 当前页数
 
-const paginate_url = "http://localhost:5000/paginate_query"
+const paginate_url = "http://192.168.1.251:8000/paginate_query"
 
 function getPageAll() {
     let getPaginate = reactive({
@@ -231,6 +235,7 @@ watch(currentPage, async (newValue) => {
         console.log(err)
     })
 })
+
 </script>
 
 <template>
@@ -271,9 +276,9 @@ watch(currentPage, async (newValue) => {
             <el-button class="getAll" @click="getPageAll()">获取全部数据</el-button>
         </el-col>
         <el-col class="showInfo" :span="21">
-            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection">
+            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection" row-key="serial">
                 <!-- 多选框 -->
-                <el-table-column type="selection" width="55" />
+                <el-table-column type="selection" width="55" reserve-selection />
                 <el-table-column prop="serial" label="流水号"></el-table-column>
                 <el-table-column prop="name" label="姓名"></el-table-column>
                 <el-table-column prop="gender" label="性别"></el-table-column>
@@ -314,6 +319,7 @@ watch(currentPage, async (newValue) => {
 .el-row {
     align-content: space-around;
 }
+
 </style>
 
 <style scoped>
