@@ -9,22 +9,22 @@ const gotInfo = ref()
 
 const infoSearch = ref()  // 精确查询的表单代理对象
 
-// const get_url = 'http://localhost:5000/quest_all'  // 获取全部数据的接口
+const get_url = 'http://192.168.1.251:8000/quest_all'  // 获取全部数据的接口
 
 // 获取全部数据
-// function getAllInfo() {
-//     axios.post(get_url).then(response => {
-//         gotInfo.value = response.data
-//         console.log(response)
-//     }).catch(function (err) {
-//         ElMessageBox.alert(err, '服务器错误', {
-//             confirmButtonText: 'OK',
-//         })
-//         console.log(err)
-//     })
-// }
+async function getAllInfo() {
+    await axios.post(get_url).then(response => {
+        gotInfo.value = response.data
+        console.log(response)
+    }).catch(function (err) {
+        ElMessageBox.alert(err, '服务器错误', {
+            confirmButtonText: 'OK',
+        })
+        console.log(err)
+    })
+}
 
-// const search_url = 'http://localhost:5000/query_by_param'  // 精确查找接口
+// const search_url = 'http://192.168.1.251:8000/query_by_param'  // 精确查找接口
 const fuzzyQuery_url = 'http://192.168.1.251:8000/fuzzy_query'  // 模糊查找接口
 
 const formInfo = reactive({
@@ -236,6 +236,30 @@ watch(currentPage, async (newValue) => {
     })
 })
 
+// 导出全部数据到xlsx
+async function exportAll() {
+    await getAllInfo()
+    let wb = xlsx.utils.table_to_book(document.querySelector('#showTable'), {
+        raw: true  // 保持原始数据内容
+    });  // 关联table
+    // let wb = xlsx.utils.json_to_sheet(selects.value)
+    let wbout = xlsx.write(wb, {
+        bookType: 'xlsx',
+        bookSST: true,
+        type: 'array'
+    })
+    try {
+        const today = new Date()
+        FileSaver.saveAs(new Blob([wbout], {
+            type: 'application/octet-stream'
+        }), `细胞供者信息-${today.toISOString()}.xlsx`)  // 自定义文件名
+    } catch (e) {
+        if (typeof console !== 'undefined') {
+            console.log(e, wbout);
+        }
+    }
+    return wbout
+}
 </script>
 
 <template>
@@ -276,10 +300,11 @@ watch(currentPage, async (newValue) => {
             <el-button class="getAll" @click="getPageAll()">获取全部数据</el-button>
         </el-col>
         <el-col class="showInfo" :span="21">
-            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection" row-key="serial">
+            <el-table class="showTable" stripe :data="gotInfo" max-height="80vh" @selection-change="selection"
+                row-key="serial" id="showTable">
                 <!-- 多选框 -->
                 <el-table-column type="selection" width="55" reserve-selection />
-                <el-table-column prop="serial" label="流水号"></el-table-column>
+                <el-table-column prop="serial" label="样本唯一ID"></el-table-column>
                 <el-table-column prop="name" label="姓名"></el-table-column>
                 <el-table-column prop="gender" label="性别"></el-table-column>
                 <el-table-column prop="id_num" label="身份证号"></el-table-column>
@@ -291,18 +316,22 @@ watch(currentPage, async (newValue) => {
             </el-table>
             <el-row class="infoFooter">
                 <!-- {{ selects }} -->
-            <el-pagination layout="prev, pager, next, total" :pager-count="11" v-model:current-page="currentPage"
-                v-model:page-count="totalPage" />
-                <el-button type="primary" @click="exportClick">导出选中内容</el-button>
+                <el-pagination layout="prev, pager, next, total" :pager-count="11" v-model:current-page="currentPage"
+                    v-model:page-count="totalPage" />
+                <div>
+                    <el-button type="primary" @click="exportClick">导出选中内容</el-button>
+                    <el-button type="primary" @click="exportAll()">导出全部内容</el-button>
+                </div>
+
             </el-row>
-            
+
         </el-col>
 
     </el-row>
 
     <div class="nonedisplay">
         <el-table stripe :data="selects" max-height="80vh" id="my_table">
-            <el-table-column prop="serial" label="流水号"></el-table-column>
+            <el-table-column prop="serial" label="样本唯一ID"></el-table-column>
             <el-table-column prop="name" label="姓名"></el-table-column>
             <el-table-column prop="gender" label="性别"></el-table-column>
             <el-table-column prop="id_num" label="身份证号"></el-table-column>
@@ -319,7 +348,6 @@ watch(currentPage, async (newValue) => {
 .el-row {
     align-content: space-around;
 }
-
 </style>
 
 <style scoped>
