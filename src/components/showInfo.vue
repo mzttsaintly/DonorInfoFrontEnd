@@ -104,7 +104,7 @@ const selectOptions = [
         label: '姓名'
     },
     {
-        value: 'name',
+        value: 'id_num',
         label: '身份证号'
     },
     {
@@ -237,7 +237,7 @@ watch(currentPage, async (newValue) => {
     <el-row class="sreachBox">
         <el-col class="sreachInfo" :span="3">
             <!-- <el-button @click="getAllInfo()">获取全部数据</el-button> -->
-            <el-form :model="timeSelect" class="infoSearch" :rules="showRules" label-position="top" ref="infoSearch">
+            <el-form :model="formInfo" class="infoSearch" :rules="showRules" label-position="top" ref="infoSearch">
                 <el-tag>按条件查找</el-tag>
                 <el-form-item label="请选择需要查询的项目" prop="searchSelect">
                     <el-select v-model="formInfo.searchSelect" class="m-2" placeholder="请选择查询项目" size="large">
@@ -248,7 +248,8 @@ watch(currentPage, async (newValue) => {
                 <el-form-item label="输入查询内容" prop="searchContent">
                     <el-input v-model="formInfo.searchContent" clearable></el-input>
                 </el-form-item>
-
+                <!-- {{ formInfo.searchSelect }}
+                {{ formInfo.searchContent }} -->
                 <el-form-item>
                     <el-button type="primary"
                         @click="fuzzyQueryInfo(infoSearch, formInfo.searchSelect, formInfo.searchContent)">查找</el-button>

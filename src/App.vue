@@ -16,10 +16,10 @@ onMounted(() => {
         <Header></Header>
     </el-row>
     <el-row class="main">
-        <el-col class="sideBar" :span="0" :md="2">
+        <el-col class="sideBar" :span="2" :md="2">
             <Sidebar></Sidebar>
         </el-col>
-        <el-col class="main" :span="24" :md="22">
+        <el-col class="main" :span="22" :md="22">
             <!-- <el-scrollbar height="80vh" ref="scrollToZero"> -->
                 <router-view></router-view>
             <!-- </el-scrollbar> -->
